@@ -8,6 +8,22 @@ and the LSB be 2<sup>-64</sup>.
 
 Then, we can chain together mutliple 64bit ints together to extend out LSB to go as far as we want. For example with 4 64bit ints the LSB would represent 2<sup>-256</sup>.
 
+example usage:
+
+see [examples/basic_usage.cpp](examples/basic_usage.cpp) for full code.
+
+addition example: 2<sup>-1</sup> + 2<sup>-65</sup>
+
+```
+    0.00000000000000000002710505431213761085
++   0.50000000000000000000000000000000000000
+---------------------------------------------
+as fractionalBignum
+0.50000000000000000002710505431213761085
+as regular double
+0.5
+
+```
 
 TODO:
  - [ ] basic I/O
