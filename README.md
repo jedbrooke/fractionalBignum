@@ -12,7 +12,8 @@ Then, we can chain together mutliple 64bit ints together to extend out LSB to go
 TODO:
  - [ ] basic I/O
     - [x] printing in hex
-    - [ ] printing in base 10
+    - [x] printing in base 10<sup>*</sup>
+    - [x] from double constructor
     - [ ] base 2/10/16/64 string constructor
  - [ ] basic arithmetic
     - [x] addition operator
@@ -27,3 +28,5 @@ TODO:
  - [ ] misc
     - [ ] setup proper library packaging
     - [ ] speed comparison to GNU GMP
+
+<sup>*</sup> base 10 conversion relies on the cmath `pow` function which is essentially just a `double`, so it breaks around 2^1024.
