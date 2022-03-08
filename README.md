@@ -1,7 +1,7 @@
 # fractionalBignum
 bignum library for representing numbers between 0 and 1 with higher than 64 bit depth
 
-int a normal 64 bit int, the MSB is 2<sup>63</sup>, and the LSB is 2<sup>1</sup>.
+in a normal 64 bit int, the MSB is 2<sup>63</sup>, and the LSB is 2<sup>0</sup>.
 
 If instead we want to represent fractions in the range of (0,1), we can take a 64 bit int and let the MSB represent 2<sup>-1</sup>
 and the LSB be 2<sup>-64</sup>.
