@@ -25,11 +25,13 @@ int main(int argc, char const *argv[])
     fractionalBignum<4> f1(d1);
     fractionalBignum<4> f2(d2);
 
-    std::cout << f1.decimal_str() << std::endl;
-    std::cout << f2.decimal_str() << std::endl;
+    std::cout << "\t" << f1.decimal_str() << std::endl;
+    std::cout << "+\t" << f2.decimal_str() << std::endl;
+    std::cout << "---------------------------------------------" << std::endl;
 
     std::cout << "as fractionalBignum" << std::endl;
     std::cout << (f1+f2).decimal_str() << std::endl;
+
 
     std::cout << "as regular double" << std::endl;
     std::cout.precision(std::numeric_limits<double>::digits10);
