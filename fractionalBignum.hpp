@@ -4,25 +4,40 @@
 #include <string>
 #include <cmath>
 #include <memory.h>
-#include <utility.hpp>
 #include <sstream>
+#include <utility>
+#include "utility.hpp"
+
+const u_int64_t ALL_ONES = 0xFFFFFFFFFFFFFFFF;
 
 template <size_t K>
 class fractionalBignum
 {
 private:
+public:
     u_int64_t v[K] = {0};
     bool isNan = false;
     bool isInf = false;
-public:
+    int overflow = 0;
     fractionalBignum();
+    fractionalBignum(const fractionalBignum<K>& f);
     fractionalBignum(u_int64_t v[K]);
+    fractionalBignum(u_int64_t v);
     fractionalBignum(u_int64_t w[2], int offset);
     fractionalBignum(std::string s, int base=10);
     fractionalBignum(double d);
     ~fractionalBignum();
 
     void insert_octoword(u_int64_t w[2], int offset);
+
+    void addInt(u_int64_t d, size_t offset);
+
+    fractionalBignum<K> twos_complement();
+    void invert();
+
+    bool isOne();
+
+    bool isZero();
 
     std::string asBase(util::bases b);
 
@@ -48,16 +63,43 @@ public:
 
     template <size_t L>
     friend fractionalBignum<L> operator*(const fractionalBignum<L>& a, const fractionalBignum<L>& b);
+    
+};
 
+
+template <size_t K>
+class fractionalBignumWithInt {
+private:
+    u_int64_t integer;
+    fractionalBignum<K> fraction;
+public:
+    fractionalBignumWithInt();
+    fractionalBignumWithInt(u_int64_t i, fractionalBignum<K> f){
+        integer = i;
+        fraction = f;
+    }
 };
 
 template <size_t K>
 fractionalBignum<K>::fractionalBignum() {}
 
+template <size_t K>
+fractionalBignum<K>::fractionalBignum(const fractionalBignum<K>& f) {
+    this->isInf = f.isInf;
+    this->isNan = f.isNan;
+    this->overflow = f.overflow;
+    std::copy(f.v, f.v + K, std::begin(this->v));
+}
+
 
 template <size_t K>
 fractionalBignum<K>::fractionalBignum(u_int64_t v[K]) {
     std::copy(v, v + K, std::begin(this->v));
+}
+
+template <size_t K>
+fractionalBignum<K>::fractionalBignum(u_int64_t v) {
+    this->v[0] = v;
 }
 
 template <size_t K>
@@ -75,19 +117,32 @@ void fractionalBignum<K>::insert_octoword(u_int64_t w[2], int offset) {
     if (offset < 0) {
         this->v[0] = w[1];
     } else {
-        if (offset < K) {
+        if (offset < (signed) K) {
             this->v[offset] = w[0];
         }
-        if ((offset + 1) < K) {
+        if ((offset + 1) < (signed) K) {
             this->v[offset+1] = w[1];
         }
     }
 }
 
 template <size_t K>
+void fractionalBignum<K>::addInt(u_int64_t d, size_t offset) {
+    if(offset < K) {
+        int carry = 0;
+        carry = __builtin_add_overflow(this->v[offset], d, &this->v[offset]);
+        for(int i = offset - 1; i >= 0; i--) {
+            carry = __builtin_add_overflow(this->v[i], carry, &this->v[i]);
+        }
+
+        this->overflow |= carry;
+    }
+}
+
+template <size_t K>
 fractionalBignum<K>::fractionalBignum(double d) {
-    this->isInf = isinfl(d);
-    this->isNan = isnanl(d);
+    this->isInf = isinf(d);
+    this->isNan = isnan(d);
     d -= floor(d);
     
     u_int64_t i;
@@ -151,7 +206,12 @@ std::string fractionalBignum<K>::base10_str(){
             mask >>= 1;
         }
     }
-    s = "0." + s;
+    // remove trailing zeros
+    int end = s.size() - 1;
+    while(s[end] == '0') {
+        end--;
+    }
+    s =  std::to_string(this->overflow) + "." + s.substr(0,end+1);
     return s;
 }
 
@@ -161,6 +221,42 @@ template <size_t K>
 std::string fractionalBignum<K>::base64_str(){}
 template <size_t K>
 std::string fractionalBignum<K>::base2_str(){}
+
+template <size_t K>
+fractionalBignum<K> fractionalBignum<K>::twos_complement() {
+    fractionalBignum<K> f = *this;
+    f.invert();
+    int carry = __builtin_add_overflow(f.v[K-1], 1, &f.v[K-1]);
+    for(int i = K-2; i >= 0; i--) {
+        carry = __builtin_add_overflow(f.v[i], carry, &f.v[i]);
+    }
+    this->overflow |= carry;
+    return f;
+}
+
+template <size_t K>
+void fractionalBignum<K>::invert() {
+    static const u_int64_t ALL_ONES = 0xFFFFFFFFFFFFFFFF;
+    for(auto i = 0; i < K; i++) {
+        this->v[i] ^= ALL_ONES;
+    }
+}
+
+template <size_t K>
+bool fractionalBignum<K>::isOne() {
+    return std::all_of(this->v, this->v + K, [](u_int64_t e) {
+            return e == 0xFFFFFFFFFFFFFFFF;
+        }
+    );
+}
+
+template <size_t K>
+bool fractionalBignum<K>::isZero() {
+    return std::all_of(this->v, this->v + K, [](u_int64_t e) {
+            return e == 0;
+        }
+    );
+}
 
 
 template <size_t K>
@@ -184,6 +280,7 @@ std::string fractionalBignum<K>::asBase(util::bases b) {
 
 template <size_t K>
 fractionalBignum<K>::~fractionalBignum() {
+
 }
 
 
@@ -206,6 +303,7 @@ fractionalBignum<K> operator+(const fractionalBignum<K>& a, const fractionalBign
         auto carry2 = __builtin_add_overflow(c.v[i], carry, &c.v[i]);
         carry = carry1 or carry2;
     }
+    c.overflow = carry;
     return c;
 }
 
@@ -217,6 +315,7 @@ fractionalBignum<K>& fractionalBignum<K>::operator+=(const fractionalBignum<K>& 
         auto carry2 = __builtin_add_overflow(this->v[i], carry, &this->v[i]);
         carry = carry1 or carry2;
     }
+    this->overflow |= carry;
     return *this;
 }
 
@@ -236,4 +335,46 @@ fractionalBignum<K> operator*(const fractionalBignum<K>& a, const fractionalBign
         }
     }
     return c;
+}
+
+
+template <size_t K>
+fractionalBignum<K> div_gs(u_int64_t numerator, u_int64_t denominator) {
+    fractionalBignum<K> f;
+
+    if(denominator == 0) {
+        f.isNan = true;
+        return f;
+    }
+
+    if(numerator > denominator) {
+        numerator %= denominator;
+    }
+
+    if(numerator == 0) {
+        return f;
+    }
+    if (denominator == 1) {
+        return f;
+    }
+
+    // scale n and d to be [0.5,1]
+    int lzcnt = __builtin_clzl(denominator);
+    fractionalBignum<K> d_prime(denominator << lzcnt);
+    fractionalBignum<K> n_prime(numerator << lzcnt);
+
+    f = d_prime.twos_complement();
+    f.overflow = 1;
+
+    while(not d_prime.isOne()) {
+        // n_prime * f
+        n_prime = (n_prime * f) + n_prime;
+        // d_prime * f
+        d_prime = (d_prime * f) + d_prime;
+
+        f = d_prime.twos_complement();
+        f.overflow = 1;
+    }
+
+    return n_prime;
 }

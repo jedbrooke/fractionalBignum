@@ -37,7 +37,7 @@ TODO:
     - [x] multiplication operator
     - [ ] comparision operators
  - [ ] additional arithmetic
-    - [ ] div(int64, int64) -> fractionalBignum
+    - [x] div(int64, int64) -> fractionalBignum
     - [ ] karatsuba/fft based multiplication for very large bit counts
     - [ ] `avx2` vecorization for speedup
     - [ ] operations with fractionalBignums of mixed sizes
