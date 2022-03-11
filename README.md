@@ -45,5 +45,6 @@ TODO:
  - [ ] misc
     - [ ] setup proper library packaging
     - [ ] speed comparison to GNU GMP
+    - [ ] tests
 
 [^1]: base 10 conversion relies on the cmath `pow` function which is essentially just a `double`, so it breaks around 2^1024.
