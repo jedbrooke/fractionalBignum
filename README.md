@@ -28,7 +28,7 @@ as regular double
 TODO:
  - [ ] basic I/O
     - [x] printing in hex
-    - [x] printing in base 10<sup>*</sup>
+    - [x] printing in base 10[^1]
     - [x] from double constructor
     - [ ] base 2/10/16/64 string constructor
  - [ ] basic arithmetic
@@ -45,4 +45,4 @@ TODO:
     - [ ] setup proper library packaging
     - [ ] speed comparison to GNU GMP
 
-<sup>*</sup> base 10 conversion relies on the cmath `pow` function which is essentially just a `double`, so it breaks around 2^1024.
+[^1]: base 10 conversion relies on the cmath `pow` function which is essentially just a `double`, so it breaks around 2^1024.
