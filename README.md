@@ -33,7 +33,7 @@ TODO:
     - [ ] base 2/10/16/64 string constructor
  - [ ] basic arithmetic
     - [x] addition operator
-    - [ ] subtraction operator
+    - [x] subtraction operator
     - [x] multiplication operator
     - [ ] comparision operators
     - [x] shift operator
