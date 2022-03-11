@@ -225,7 +225,13 @@ std::string fractionalBignum<K>::base10_str(){
 }
 
 template <size_t K>
-std::string fractionalBignum<K>::base16_str(){}
+std::string fractionalBignum<K>::base16_str(){
+    std::stringstream ss;
+    for(auto &&e: this->v) {
+        ss << std::hex << e;
+    }
+    return ss.str();
+}
 template <size_t K>
 std::string fractionalBignum<K>::base64_str(){}
 template <size_t K>
