@@ -6,6 +6,7 @@
 #include <memory.h>
 #include <sstream>
 #include <utility>
+#include <algorithm>
 #include "utility.hpp"
 
 const u_int64_t ALL_ONES = 0xFFFFFFFFFFFFFFFF;
@@ -150,8 +151,8 @@ void fractionalBignum<K>::addInt(u_int64_t d, size_t offset) {
 
 template <size_t K>
 fractionalBignum<K>::fractionalBignum(double d) {
-    this->isInf = isinf(d);
-    this->isNan = isnan(d);
+    this->isInf = std::isinf(d);
+    this->isNan = std::isnan(d);
     d -= floor(d);
     
     u_int64_t i;
