@@ -32,7 +32,7 @@ public:
 
     void addInt(u_int64_t d, size_t offset);
 
-    fractionalBignum<K> twos_complement();
+    fractionalBignum<K> twos_complement() const;
     void invert();
 
     bool isOne();
@@ -58,6 +58,9 @@ public:
 
     template <size_t L>
     friend fractionalBignum<L> operator+(const fractionalBignum<L>& a, const fractionalBignum<L>& b);
+
+    template <size_t L>
+    friend fractionalBignum<L> operator-(const fractionalBignum<L>& a, const fractionalBignum<L>& b);
 
     fractionalBignum<K>& operator+=(const fractionalBignum<K>& b);
 
@@ -229,14 +232,14 @@ template <size_t K>
 std::string fractionalBignum<K>::base2_str(){}
 
 template <size_t K>
-fractionalBignum<K> fractionalBignum<K>::twos_complement() {
+fractionalBignum<K> fractionalBignum<K>::twos_complement() const {
     fractionalBignum<K> f = *this;
     f.invert();
     int carry = __builtin_add_overflow(f.v[K-1], 1, &f.v[K-1]);
     for(int i = K-2; i >= 0; i--) {
         carry = __builtin_add_overflow(f.v[i], carry, &f.v[i]);
     }
-    this->overflow |= carry;
+    f.overflow = carry;
     return f;
 }
 
@@ -310,6 +313,13 @@ fractionalBignum<K> operator+(const fractionalBignum<K>& a, const fractionalBign
         carry = carry1 or carry2;
     }
     c.overflow = carry;
+    return c;
+}
+
+template <size_t K>
+fractionalBignum<K> operator-(const fractionalBignum<K>& a, const fractionalBignum<K>& b) {
+    auto c = a + b.twos_complement();
+    c.overflow = 0;
     return c;
 }
 
