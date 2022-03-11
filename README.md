@@ -36,6 +36,7 @@ TODO:
     - [ ] subtraction operator
     - [x] multiplication operator
     - [ ] comparision operators
+    - [x] shift operator
  - [ ] additional arithmetic
     - [x] div(int64, int64) -> fractionalBignum
     - [ ] karatsuba/fft based multiplication for very large bit counts

@@ -63,6 +63,12 @@ public:
 
     template <size_t L>
     friend fractionalBignum<L> operator*(const fractionalBignum<L>& a, const fractionalBignum<L>& b);
+
+    template <size_t L>
+    friend fractionalBignum<L> operator<<(const fractionalBignum<L>& a, const size_t s);
+    
+    template <size_t L>
+    friend fractionalBignum<L> operator>>(const fractionalBignum<L>& a, const size_t s);
     
 };
 
@@ -335,6 +341,48 @@ fractionalBignum<K> operator*(const fractionalBignum<K>& a, const fractionalBign
         }
     }
     return c;
+}
+
+template <size_t K>
+fractionalBignum<K> operator<<(const fractionalBignum<K>& a, const size_t s) {
+    auto big_shift = s / 64;
+    fractionalBignum<K> f;
+    for(auto i = 0; i < K - big_shift; i++) {
+        f.v[i] = a.v[i + big_shift];
+    }   
+    auto small_shift = s % 64;
+    u_int64_t mask = 0xFFFFFFFFFFFFFFFF >> (64 - small_shift);
+    mask <<= (64 - small_shift);
+
+    for(int i = 0; i < K - 1; i++) {
+        u_int64_t bits = f.v[i + 1] & mask;
+        bits >>= (64 - small_shift);
+        f.v[i] <<= small_shift;
+        f.v[i] += bits;
+    }
+    f.v[K-1] <<= small_shift;
+    return f;
+}
+
+template <size_t K>
+fractionalBignum<K> operator>>(const fractionalBignum<K>& a, const size_t s) {
+    auto big_shift = s / 64;
+    fractionalBignum<K> f;
+    for(auto i = big_shift; i < K; i++) {
+        f.v[i + big_shift] = a.v[i];
+    }   
+    auto small_shift = s % 64;
+    u_int64_t mask = 0xFFFFFFFFFFFFFFFF << (64 - small_shift);
+    mask >>= (64 - small_shift);
+    
+    for(int i = K - 1; i > 0; i--) {
+        u_int64_t bits = f.v[i - 1] & mask;
+        bits <<= (64 - small_shift);
+        f.v[i] >>= small_shift;
+        f.v[i] += bits;
+    }
+    f.v[0] >>= small_shift;
+    return f;
 }
 
 
