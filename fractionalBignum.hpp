@@ -49,7 +49,7 @@ public:
     std::string base2_str();
 
     std::string hex_str() {return asBase(util::HEX);}
-    std::string base16_str();
+    std::string base16_str(char sep='\0') const;
 
     std::string base64_str();
 
@@ -226,10 +226,10 @@ std::string fractionalBignum<K>::base10_str(){
 }
 
 template <size_t K>
-std::string fractionalBignum<K>::base16_str(){
+std::string fractionalBignum<K>::base16_str(char sep) const{
     std::stringstream ss;
-    for(auto &&e: this->v) {
-        ss << std::hex << e;
+    for(auto i = 0; i < K; i++) {
+       ss << std::setfill('0') << std::setw(16) << std::hex << this->v[i] << sep;
     }
     return ss.str();
 }
@@ -302,11 +302,7 @@ fractionalBignum<K>::~fractionalBignum() {
 
 template <size_t K>
 std::ostream& operator<<(std::ostream& os, const fractionalBignum<K>& f) {
-    std::ios_base::fmtflags flags(os.flags());
-    for(auto i = 0; i < K; i++) {
-       os << std::setfill('0') << std::setw(16) << std::hex << f.v[i] << " ";
-    }
-    os.flags(flags);
+    os << f.base16_str(' ');
     return os;
 }
 
