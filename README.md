@@ -25,10 +25,31 @@ as regular double
 
 ```
 
+speed comparison[^1]:
+
+see [examples/speed_comparison.cpp](examples/speed_comparison.cpp) for full code.
+
+comparison to [gmp](https://gmplib.org/)
+
+```
+fractionalBignum:       0.00000000000000000005421010862427522170331137592055280...
+gmp mpf_t:              0.00000000000000000005421010862427522170331137592055280...
+running 1073741824 iterations
+running fractionalBignum
+10.4733s
+running gmp mpf_t test
+22.4992s
+check results:
+fractionalBignum:       0.00000000005820766091346740722971794362088404722181797...
+gmp mpf_t:              0.00000000005820766091346740722971794362088404722181797...
+```
+the results do not match exactly, but are accurate to 85 decimal places
+
+
 TODO:
  - [ ] basic I/O
     - [x] printing in hex
-    - [x] printing in base 10[^1]
+    - [x] printing in base 10[^2]
     - [x] from double constructor
     - [ ] base 2/10/16/64 string constructor
  - [ ] basic arithmetic
@@ -43,8 +64,10 @@ TODO:
     - [ ] `avx2` vecorization for speedup
     - [ ] operations with fractionalBignums of mixed sizes
  - [ ] misc
-    - [ ] setup proper library packaging
-    - [ ] speed comparison to GNU GMP
+    - [x] setup proper library packaging
+    - [x] speed comparison to GNU GMP
     - [ ] tests
 
-[^1]: base 10 conversion relies on the cmath `pow` function which is essentially just a `double`, so it breaks around 2^1024.
+[^1]: test system used: intel i5 4950 @3.5ghz 16GB RAM
+
+[^2]: base 10 conversion relies on the cmath `pow` function which is essentially just a `double`, so it breaks around 2^1024.
