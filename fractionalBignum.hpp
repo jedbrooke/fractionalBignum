@@ -231,7 +231,10 @@ template <size_t K>
 std::string fractionalBignum<K>::base16_str(char sep) const{
     std::stringstream ss;
     for(auto i = 0; i < K; i++) {
-       ss << std::setfill('0') << std::setw(16) << std::hex << this->v[i] << sep;
+       ss << std::setfill('0') << std::setw(16) << std::hex << this->v[i];
+       if(sep) {
+           ss << sep;
+       }
     }
     return ss.str();
 }
