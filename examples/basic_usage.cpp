@@ -39,7 +39,7 @@ int main(/* int argc, char const *argv[] */)
     std::cout << std::endl;
 
     // from division of integers
-    auto q = div_gs<k>(1,3);
+    auto q = fb_div<k>(1,3);
     std::cout << "1/3:" << std::endl;
     std::cout << "as hex:\t\t" << q << std::endl;
     std::cout << "as decimal:\t" << q.decimal_str() << std::endl;

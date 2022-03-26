@@ -10,6 +10,8 @@
 #include "utility.hpp"
 
 const u_int64_t ALL_ONES = 0xFFFFFFFFFFFFFFFF;
+const std::string NAN_STR("nan");
+const std::string INF_STR("infinity");
 
 template <size_t K>
 class fractionalBignum
@@ -277,6 +279,13 @@ bool fractionalBignum<K>::isZero() {
 
 template <size_t K>
 std::string fractionalBignum<K>::asBase(util::bases b) {
+    
+    if(this->isNan) {
+        return NAN_STR;
+    }
+    if (this->isInf) {
+        return INF_STR;
+    }
     switch (b)
     {
     case util::TWO:
@@ -341,18 +350,24 @@ fractionalBignum<K>& fractionalBignum<K>::operator+=(const fractionalBignum<K>& 
 template <size_t K>
 fractionalBignum<K> operator*(const fractionalBignum<K>& a, const fractionalBignum<K>& b) {
     fractionalBignum<K> c;
-    u_int64_t v[2];
-    for(int i = (K-1); i >= 0; i--) {
-        for(int j = (K-i); j >= 0; j--) {
+
+    for(int ai = K-1; ai >= 0; ai--) {
+        fractionalBignum<K> carry;
+        fractionalBignum<K> term;
+
+        for(int bi = K-1; bi >= 0; bi--) {
+            if((ai + bi) >= K) {
+                continue;
+            }
             __asm__(
                 "mulq %%rbx"
-                : "=d" (v[0]), "=a" (v[1])
-                : "a" (a.v[i]), "b" (b.v[j])
+                : "=d" (carry.v[ai + bi]), "=a" (term.v[ai + bi + 1])
+                : "a" (a.v[ai]), "b" (b.v[bi])
             );
-            fractionalBignum<K> t(v,i+j);
-            c += t;
         }
-    }
+        c += term;
+        c += carry;
+    }    
     return c;
 }
 
@@ -425,7 +440,6 @@ fractionalBignum<K> div_gs(u_int64_t numerator, u_int64_t denominator) {
     fractionalBignum<K> n_prime(numerator << lzcnt);
 
     f = d_prime.twos_complement();
-    f.overflow = 1;
 
     while(not d_prime.isOne()) {
         // n_prime * f
@@ -434,8 +448,41 @@ fractionalBignum<K> div_gs(u_int64_t numerator, u_int64_t denominator) {
         d_prime = (d_prime * f) + d_prime;
 
         f = d_prime.twos_complement();
-        f.overflow = 1;
     }
 
     return n_prime;
+}
+
+template <size_t K> 
+fractionalBignum<K> fb_div(u_int64_t numerator, u_int64_t denominator) {
+    fractionalBignum<K> f;
+
+    if(denominator == 0) {
+        f.isNan = true;
+        return f;
+    }
+
+    if(numerator > denominator) {
+        numerator %= denominator;
+    }
+
+    if(numerator == 0) {
+        return f;
+    }
+    if (denominator == 1) {
+        return f;
+    }
+
+    u_int64_t r = numerator;
+
+    for(size_t i = 0; i < K; i++) {
+        __asm__(
+            "divq %%rbx"
+            : "=a" (f.v[i]), "=d" (r)
+            : "d" (r), "b" (denominator), "a" (0)  
+        );
+    }
+
+    return f;
+
 }
