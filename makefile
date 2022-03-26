@@ -1,5 +1,5 @@
 CXX=g++
-CFLAGS=--std=c++11 -Wall -Wextra -O2
+CFLAGS=--std=c++11 -O3 -pg
 
 .PHONY: default
 default: fractionalBignum.a
@@ -18,6 +18,12 @@ basic_usage: fractionalBignum.a examples/basic_usage.cpp
 
 speed_comparison: fractionalBignum.a examples/speed_comparison.cpp
 	$(CXX) -o speed_comparison examples/speed_comparison.cpp -I. fractionalBignum.a -lgmp -lgmpxx $(CFLAGS)
+
+ln2: fractionalBignum.a examples/ln2.cpp
+	$(CXX) -o ln2 examples/ln2.cpp -I. fractionalBignum.a -lgmp -lgmpxx $(CFLAGS)
+
+
+examples: ln2 speed_comparison basic_usage
 
 .PHONY: clean
 clean: 
