@@ -237,7 +237,17 @@ std::string fractionalBignum<K>::base16_str(char sep) const{
 template <size_t K>
 std::string fractionalBignum<K>::base64_str(){}
 template <size_t K>
-std::string fractionalBignum<K>::base2_str(){}
+std::string fractionalBignum<K>::base2_str() {
+    std::stringstream ss;
+    for (size_t i = 0; i < K; i++) {
+        u_int64_t mask = (1L << 63);
+        for(auto b = 0; b < 64; b++) {
+            ss << ((this->v[i] & mask) && 1);
+            mask >>= 1;
+        }
+    }
+    return ss.str();
+}
 
 template <size_t K>
 fractionalBignum<K> fractionalBignum<K>::twos_complement() const {
