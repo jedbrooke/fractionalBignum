@@ -1,3 +1,5 @@
+#pragma once
+
 #include <string>
 #include <iostream>
 #include <iomanip>
@@ -37,6 +39,8 @@ public:
 
     fractionalBignum<K> twos_complement() const;
     void invert();
+
+    void setZero();
 
     bool isOne();
 
@@ -261,6 +265,11 @@ void fractionalBignum<K>::invert() {
     for(auto i = 0; i < K; i++) {
         this->v[i] ^= ALL_ONES;
     }
+}
+
+template <size_t K>
+void fractionalBignum<K>::setZero() {
+    bzero(this->v, K * sizeof(u_int64_t));
 }
 
 template <size_t K>
