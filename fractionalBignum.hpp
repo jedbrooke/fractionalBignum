@@ -23,7 +23,6 @@ public:
     u_int64_t v[K] = {0};
     bool isNan = false;
     bool isInf = false;
-    int overflow = 0;
     fractionalBignum();
     fractionalBignum(const fractionalBignum<K>& f);
     fractionalBignum(u_int64_t v[K]);
@@ -103,7 +102,6 @@ template <size_t K>
 fractionalBignum<K>::fractionalBignum(const fractionalBignum<K>& f) {
     this->isInf = f.isInf;
     this->isNan = f.isNan;
-    this->overflow = f.overflow;
     std::copy(f.v, f.v + K, std::begin(this->v));
 }
 
@@ -150,8 +148,6 @@ void fractionalBignum<K>::addInt(u_int64_t d, size_t offset) {
         for(int i = offset - 1; i >= 0; i--) {
             carry = __builtin_add_overflow(this->v[i], carry, &this->v[i]);
         }
-
-        this->overflow |= carry;
     }
 }
 
@@ -227,7 +223,7 @@ std::string fractionalBignum<K>::base10_str(){
     while(s[end] == '0') {
         end--;
     }
-    s =  std::to_string(this->overflow) + "." + s.substr(0,end+1);
+    s =  "0." + s.substr(0,end+1);
     return s;
 }
 
@@ -245,7 +241,17 @@ std::string fractionalBignum<K>::base16_str(char sep) const{
 template <size_t K>
 std::string fractionalBignum<K>::base64_str(){}
 template <size_t K>
-std::string fractionalBignum<K>::base2_str(){}
+std::string fractionalBignum<K>::base2_str() {
+    std::stringstream ss;
+    for (size_t i = 0; i < K; i++) {
+        u_int64_t mask = (1L << 63);
+        for(auto b = 0; b < 64; b++) {
+            ss << ((this->v[i] & mask) && 1);
+            mask >>= 1;
+        }
+    }
+    return ss.str();
+}
 
 template <size_t K>
 fractionalBignum<K> fractionalBignum<K>::twos_complement() const {
@@ -255,7 +261,6 @@ fractionalBignum<K> fractionalBignum<K>::twos_complement() const {
     for(int i = K-2; i >= 0; i--) {
         carry = __builtin_add_overflow(f.v[i], carry, &f.v[i]);
     }
-    f.overflow = carry;
     return f;
 }
 
@@ -336,14 +341,12 @@ fractionalBignum<K> operator+(const fractionalBignum<K>& a, const fractionalBign
         auto carry2 = __builtin_add_overflow(c.v[i], carry, &c.v[i]);
         carry = carry1 or carry2;
     }
-    c.overflow = carry;
     return c;
 }
 
 template <size_t K>
 fractionalBignum<K> operator-(const fractionalBignum<K>& a, const fractionalBignum<K>& b) {
     auto c = a + b.twos_complement();
-    c.overflow = 0;
     return c;
 }
 
@@ -355,7 +358,6 @@ fractionalBignum<K>& fractionalBignum<K>::operator+=(const fractionalBignum<K>& 
         auto carry2 = __builtin_add_overflow(this->v[i], carry, &this->v[i]);
         carry = carry1 or carry2;
     }
-    this->overflow |= carry;
     return *this;
 }
 
