@@ -12,6 +12,7 @@
 #include "utility.hpp"
 
 const u_int64_t ALL_ONES = 0xFFFFFFFFFFFFFFFF;
+const u_int64_t HIGHEST_ONE = 0x8000000000000000;
 const std::string NAN_STR("nan");
 const std::string INF_STR("infinity");
 
@@ -30,6 +31,9 @@ public:
     fractionalBignum(u_int64_t w[2], int offset);
     fractionalBignum(std::string s, int base=10);
     fractionalBignum(double d);
+
+    static fractionalBignum<K> fromPow2(int p);
+
     ~fractionalBignum();
 
     void insert_octoword(u_int64_t w[2], int offset);
@@ -179,6 +183,20 @@ fractionalBignum<K>::fractionalBignum(double d) {
     u_int64_t v[2] = {1,f};
     util::octoword_slli(v, exponent % 64);
     insert_octoword(v, abs(exponent / 64) - 1);
+}
+
+template <size_t K>
+fractionalBignum<K> fractionalBignum<K>::fromPow2(int p) {
+    fractionalBignum<K> f;
+    if (p > 0) {
+        return f;
+    }
+    size_t block = (-(p+1) / 64);
+    size_t offset = (-(p+1) % 64);
+    if (block < K) {
+        f.v[block] = (HIGHEST_ONE >> offset);
+    } 
+    return f;
 }
 
 template <size_t K>

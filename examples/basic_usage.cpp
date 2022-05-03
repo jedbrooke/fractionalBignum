@@ -11,6 +11,11 @@ int main(/* int argc, char const *argv[] */)
     fractionalBignum<k> f1(v);
     // initialize from double
     fractionalBignum<k> f2(0.25);
+    // initialize from power of 2
+    auto pow2 = fractionalBignum<2>::fromPow2(-65);
+    std::cout << "from power of 2" << std::endl;
+    std::cout << pow2 << std::endl;
+    std::cout << pow2.base10_str() << std::endl;
 
 
     // print raw hex
@@ -63,6 +68,8 @@ int main(/* int argc, char const *argv[] */)
 
     std::cout.precision(std::numeric_limits<double>::max_digits10);
     std::cout << d1 + d2 << std::endl;
+
+
 
 
 

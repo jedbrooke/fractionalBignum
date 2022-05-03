@@ -2,3 +2,7 @@
 *.o
 *.a
 *.txt
+*.out
+basic_usage
+ln2
+speed_comparison
