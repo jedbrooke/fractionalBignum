@@ -1,7 +1,9 @@
-#include "fractionalBignum.hpp"
+
 #include <iostream>
 #include <cmath>
 #include <limits>
+
+#include "../fractionalBignum.hpp"
 
 int main(/* int argc, char const *argv[] */)
 {

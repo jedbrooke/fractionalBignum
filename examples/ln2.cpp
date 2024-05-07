@@ -11,7 +11,7 @@
 // mpf:    0.69314717555994533441723212145817531808
 // actual: 0.693147180559945309417232121458
 
-#include "fractionalBignum.hpp"
+#include "../fractionalBignum.hpp"
 #include <gmp.h>
 #include <iostream>
 #include <ctime>
@@ -32,8 +32,8 @@ int main(int argc, char const *argv[])
     START_CLOCK
     double s = 1;
     for(size_t i = 2; i < iterations; i+=2) {
-        s -= 1.0d / i;
-        s += 1.0d / (i+1);
+        s -= 1.0 / i;
+        s += 1.0 / (i+1);
     }
     STOP_CLOCK
     
@@ -115,11 +115,12 @@ int main(int argc, char const *argv[])
     std::cout << "results:" << std::endl;
     std::cout.precision(17);
     std::cout << "double:\t" << s << std::endl;
-    std::cout << "fb:\t" << s_fb.decimal_str() << std::endl;
+    std::cout << "fbnum:\t" << s_fb.decimal_str() << std::endl;
     gmp_printf("mpf:\t%.*Ff\n", precision, s_mpf);
     // std::cout << "mpq:\t" << mpq_get_d(s_mpq) << std::endl;
 
     // "wikipedia" actual answer
+    // https://en.wikipedia.org/wiki/Natural_logarithm_of_2
     std::cout << "actual:\t" << "0.693147180559945309417232121458" << std::endl;
 
     return 0;

@@ -12,7 +12,6 @@
 #include "utility.hpp"
 
 const u_int64_t ALL_ONES = 0xFFFFFFFFFFFFFFFF;
-const u_int64_t HIGHEST_ONE = 0x8000000000000000;
 const std::string NAN_STR("nan");
 const std::string INF_STR("infinity");
 
@@ -31,9 +30,6 @@ public:
     fractionalBignum(u_int64_t w[2], int offset);
     fractionalBignum(std::string s, int base=10);
     fractionalBignum(double d);
-
-    static fractionalBignum<K> fromPow2(int p);
-
     ~fractionalBignum();
 
     void insert_octoword(u_int64_t w[2], int offset);
@@ -183,20 +179,6 @@ fractionalBignum<K>::fractionalBignum(double d) {
     u_int64_t v[2] = {1,f};
     util::octoword_slli(v, exponent % 64);
     insert_octoword(v, abs(exponent / 64) - 1);
-}
-
-template <size_t K>
-fractionalBignum<K> fractionalBignum<K>::fromPow2(int p) {
-    fractionalBignum<K> f;
-    if (p > 0) {
-        return f;
-    }
-    size_t block = (-(p+1) / 64);
-    size_t offset = (-(p+1) % 64);
-    if (block < K) {
-        f.v[block] = (HIGHEST_ONE >> offset);
-    } 
-    return f;
 }
 
 template <size_t K>
@@ -370,60 +352,67 @@ fractionalBignum<K> operator-(const fractionalBignum<K>& a, const fractionalBign
 
 template <size_t K>
 fractionalBignum<K>& fractionalBignum<K>::operator+=(const fractionalBignum<K>& b) {
-    auto carry = 0;
+    unsigned int carry = 0;
     for(int i = (K-1); i >= 0; i--) {
-        auto carry1 = __builtin_add_overflow(this->v[i], b.v[i], &this->v[i]);
-        auto carry2 = __builtin_add_overflow(this->v[i], carry, &this->v[i]);
+        bool carry1 = __builtin_add_overflow(this->v[i], b.v[i], &this->v[i]);
+        bool carry2 = __builtin_add_overflow(this->v[i], carry, &this->v[i]);
         carry = carry1 or carry2;
     }
     return *this;
 }
 
-#ifdef __x86_64__
 template <size_t K>
 fractionalBignum<K> operator*(const fractionalBignum<K>& a, const fractionalBignum<K>& b) {
     fractionalBignum<K> c;
-    for(int ai = K-1; ai >= 0; ai--) {
-        fractionalBignum<K> carry;
-        fractionalBignum<K> term;
+    // use 32 bit for our base since we don't have access to the upper 64 bit register on non-x86
+    u_int32_t a_32[K*2];
+    u_int32_t b_32[K*2];
+    for (int i = 0; i < K*2; i+=2) {
+        a_32[i] = a.v[i] >> 32;
+        a_32[i+1] = a.v[i] & (u_int32_t) -1;
+        b_32[i] = b.v[i] >> 32;
+        b_32[i+1] = b.v[i] & (u_int32_t) -1;
+    }
+    u_int32_t c_32[K*2] = {0};
 
-        for(int bi = K-1; bi >= 0; bi--) {
-            if((ai + bi) >= K) {
+    for(int ai = (K * 2) - 1; ai >= 0; ai--) {
+        u_int32_t carry_32[K*2] = {0};
+        u_int32_t term_32[K*2] = {0};
+
+        for(int bi = (K * 2) - 1; bi >= 0; bi--) {
+            if((ai + bi) >= (K * 2)) {
                 continue;
             }
-            __asm__(
-                "mulq %%rbx"
-                : "=d" (carry.v[ai + bi]), "=a" (term.v[ai + bi + 1])
-                : "a" (a.v[ai]), "b" (b.v[bi])
-            );
+            u_int64_t t = (u_int64_t) a_32[ai] * (u_int64_t) b_32[bi];
+            carry_32[ai + bi] = t >> 32;
+            term_32[ai + bi + 1] = t & (u_int32_t) -1;
+//            __asm__(
+//                "mulq %%rbx"
+//                : "=d" (carry.v[ai + bi]), "=a" (term.v[ai + bi + 1])
+//                : "a" (a.v[ai]), "b" (b.v[bi])
+//            );
         }
-        c += term;
-        c += carry;
-    }    
-    return c;
-}
-#else
-template <size_t K>
-fractionalBignum<K> operator*(const fractionalBignum<K>& a, const fractionalBignum<K>& b) {
-    fractionalBignum<K> c;
-    for(int ai = K-1; ai >= 0; ai--) {
-        fractionalBignum<K> carry;
-        fractionalBignum<K> term;
 
-        for(int bi = K-1; bi >= 0; bi--) {
-            if((ai + bi) >= K) {
-                continue;
-            }
-            __int128 p = (__int128) a.v[ai] * b.v[bi];
-            term.v[ai + bi + 1] = (u_int64_t) p;
-            carry.v[ai + bi] = p >> 64;
+        unsigned int carry = 0;
+        for(int i = (K * 2) - 1; i >= 0; i--) {
+            bool carry1 = __builtin_add_overflow(c_32[i], carry_32[i], &c_32[i]);
+            bool carry2 = __builtin_add_overflow(c_32[i], carry, &c_32[i]);
+            carry = carry1 or carry2;
         }
-        c += term;
-        c += carry;
+
+        carry = 0;
+        for(int i = (K * 2) - 1; i >= 0; i--) {
+            bool carry1 = __builtin_add_overflow(c_32[i], term_32[i], &c_32[i]);
+            bool carry2 = __builtin_add_overflow(c_32[i], carry, &c_32[i]);
+            carry = carry1 or carry2;
+        }
+    }
+    
+    for (int i = 0; i < K * 2; i+=2) {
+        c.v[i / 2] = ((u_int64_t) c_32[i] << 32) + c_32[i + 1];
     }
     return c;
 }
-#endif
 
 template <size_t K>
 fractionalBignum<K> operator<<(const fractionalBignum<K>& a, const size_t s) {
@@ -511,10 +500,8 @@ template <size_t K>
 fractionalBignum<K> fb_div(u_int64_t numerator, u_int64_t denominator) {
     fractionalBignum<K> f;
 
-#ifndef __x86_64__
     // use 32 bit for our base since we don't have access to the upper 64 bit register on non-x86
     u_int32_t f_32[K*2];
-#endif
 
     if(denominator == 0) {
         f.isNan = true;
@@ -534,23 +521,19 @@ fractionalBignum<K> fb_div(u_int64_t numerator, u_int64_t denominator) {
 
     u_int64_t r = numerator;
 
-#ifdef __x86_64__
-    for(size_t i = 0; i < K; i++) {
-        __asm__(
-            "divq %%rbx"
-            : "=a" (f.v[i]), "=d" (r)
-            : "d" (r), "b" (denominator), "a" (0)  
-        );
-    }
-#else
     for(size_t i = 0; i < K*2; i++) {
         f_32[i] = (r << 32) / denominator;
         r = (r << 32) % denominator;
         if (i & 1) {
-            f.v[i / 2] = ((u_int64_t) f_32[i - 1] << 32) + (u_int64_t) f_32[i];
+            f.v[i/2] = ((u_int64_t) f_32[i-1] << 32) + (u_int64_t) f_32[i];
         }
+//        __asm__(
+//            "divq %%rbx"
+//            : "=a" (f.v[i]), "=d" (r)
+//            : "d" (r), "b" (denominator), "a" (0)
+//        );
     }
-#endif
 
     return f;
+
 }

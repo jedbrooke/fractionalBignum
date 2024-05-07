@@ -2,7 +2,22 @@
 *.o
 *.a
 *.txt
-*.out
+
+.DS_Store
+.idea
+.cmake
+.ninja_*
+build.ninja
+
+
+#generate example executables
 basic_usage
 ln2
 speed_comparison
+
+#cmake auto-generated
+Testing
+CMakeCache.txt
+CMakeFiles
+!CMakeLists.txt
+build

@@ -1,4 +1,4 @@
-#include "fractionalBignum.hpp"
+#include "../fractionalBignum.hpp"
 #include <iostream>
 #include <cmath>
 #include <gmp.h>
@@ -64,7 +64,7 @@ int main(int argc, char const *argv[])
     std::cout << "fractionalBignum:\t";
     std::cout << t_fb.decimal_str() << std::endl;
 
-    std::cout << "gmp mpf_t:\t\t";
+    std::cout << "gmp mpf_t:\t\t\t";
     gmp_printf("%.*Ff\n", precision, t);
 
     return 0;
